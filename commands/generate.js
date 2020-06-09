@@ -47,7 +47,7 @@ async function generate(source, target, css)
     // console.log( html );
 
     console.log(chalk.keyword('pink')(`Adding css`));
-    let $ = cheerio.load(html);
+    let $ = cheerio.load('<!doctype html>' + html);
 
     let localStyle = `<style>
     .markdown-body {
@@ -59,7 +59,7 @@ async function generate(source, target, css)
         border-style: dotted solid;
     }
 
-	@media (max-width: 767px) {
+	  @media (max-width: 767px) {
 		.markdown-body {
 			padding: 15px;
         }
@@ -165,10 +165,15 @@ async function generate(source, target, css)
       }
 	`;
 
+    $('head').append(
+      `<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+      <meta content="utf-8" http-equiv="encoding"></meta>`
+    );
+
     $('head').append(localStyle);
 
     $('head').append(
-        `<link rel="stylesheet" href="${css}" />`
+        `<link rel="stylesheet" href="file:///${css}" />`
     );
 
 
