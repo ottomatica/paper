@@ -1,0 +1,21 @@
+{
+  "name": "paper",
+  "version": "0.0.1",
+  "description": "markdown workflow tool",
+  "bin": "index.js",
+  "main": "index.js",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "cheerio": "^1.0.0-rc.3",
+    "github-markdown-css": "^4.0.0",
+    "highlight.js": "^10.0.3",
+    "marked": "^1.1.0",
+    "yargs": "^15.3.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
