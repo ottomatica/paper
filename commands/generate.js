@@ -7,7 +7,7 @@ const path  = require('path');
 
 const cheerio = require('cheerio');
 
-exports.command = 'generate <source>';
+exports.command = 'generate <source> [target]';
 exports.desc = 'Create artifact from markdown';
 exports.builder = yargs => {
     yargs.options({
@@ -17,19 +17,24 @@ exports.builder = yargs => {
 
 
 exports.handler = async argv => {
-    const { source } = argv;
+    let { source, target } = argv;
+
+    if( target === undefined )
+    {
+        target = path.basename(source) + '.html';
+    }
 
     let css = path.join( __dirname, '..', 'node_modules', 'github-markdown-css', 'github-markdown.css');
 
     (async () => {
     
-        await generate(source, css);
+        await generate(source, target, css);
 
     })();
 
 };
 
-async function generate(source, css)
+async function generate(source, target, css)
 {
     console.log(chalk.keyword('pink')(`Transforming ${source}`));
     // child.execSync(`pandoc --from=markdown_mmd+yaml_metadata_block+smart --standalone --to=html -V css=${css} --output=Shells.html ${source}`)
@@ -173,6 +178,8 @@ async function generate(source, css)
     $.root().append(`<article class="markdown-body"></article>`);
     $('.markdown-body').append(body);
 
-    fs.writeFileSync('Shells2.html', $.html())
+    
+
+    fs.writeFileSync(target, $.html())
 
 }
