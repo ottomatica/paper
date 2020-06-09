@@ -24,7 +24,19 @@ exports.handler = async argv => {
         target = path.basename(source) + '.html';
     }
 
-    let css = path.join( __dirname, '..', 'node_modules', 'github-markdown-css', 'github-markdown.css');
+    // Prepare css dependencies and copy to target directory
+    let github_css = path.join( __dirname, '..', 'node_modules', 'github-markdown-css', 'github-markdown.css');
+    let highlight_css = path.join(__dirname, '..', 'node_modules', 'highlight.js', 'styles', 'github.css');
+    let target_dir = path.dirname( target );
+    if( !fs.existsSync( target_dir) )
+    {
+        fs.mkdirSync( target_dir );
+    }
+
+    fs.copyFileSync( github_css, path.join( target_dir, 'github-markdown.css') );
+    fs.copyFileSync( highlight_css, path.join( target_dir, 'github.css') );
+
+    css = ['github-markdown.css', 'github.css'];
 
     (async () => {
     
@@ -79,18 +91,12 @@ async function generate(source, target, css)
 
   $('head').append(localStyle);
 
-  let githubcss = path.join(__dirname, '..', 'node_modules', 'highlight.js', 'styles', 'github.css');
-
-  $('head').append( 
-    `<style>
-      ${fs.readFileSync(githubcss)}
-    </style>`
-  );
-
-
-  $('head').append(
-      `<link rel="stylesheet" href="file:///${css}" />`
-  );
+  for( var link of css)
+  {
+    $('head').append(
+        `<link rel="stylesheet" href="${link}" />`
+    );
+  }
 
 
   let body = $('body').html();
