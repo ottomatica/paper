@@ -36,20 +36,25 @@ exports.handler = async argv => {
 
 async function generate(source, target, css)
 {
-    console.log(chalk.keyword('pink')(`Transforming ${source}`));
-    // child.execSync(`pandoc --from=markdown_mmd+yaml_metadata_block+smart --standalone --to=html -V css=${css} --output=Shells.html ${source}`)
+  console.log(chalk.keyword('pink')(`Transforming ${source}`));
+  // child.execSync(`pandoc --from=markdown_mmd+yaml_metadata_block+smart --standalone --to=html -V css=${css} --output=Shells.html ${source}`)
 
-    let Parse = require('../lib/markdown');
-    let parser = new Parse();
+  let Parse = require('../lib/markdown');
+  let parser = new Parse();
 
-    let html = await parser.parse( source )
+  let html = await parser.parse( source )
 
-    // console.log( html );
+  // console.log( html );
 
-    console.log(chalk.keyword('pink')(`Adding css`));
-    let $ = cheerio.load('<!doctype html>' + html);
+  console.log(chalk.keyword('pink')(`Adding css`));
+  let $ = cheerio.load('<!doctype html>' + html);
 
-    let localStyle = `<style>
+  $('head').append(
+      `<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+       <meta content="utf-8" http-equiv="encoding"></meta>`
+  );
+
+  let localStyle = `<style>
     .markdown-body {
 		box-sizing: border-box;
 		min-width: 200px;
@@ -69,122 +74,31 @@ async function generate(source, target, css)
         border-style: solid;
         background-color: rgba(255,10,0,.05);
     }
+    </style>
+  `;
 
-    .hljs {
-        display: block;
-        overflow-x: auto;
-        padding: 0.5em;
-        color: #333;
-        background: #f8f8f8;
-      }
-      
-      .hljs-comment,
-      .hljs-quote {
-        color: #998;
-        font-style: italic;
-      }
-      
-      .hljs-keyword,
-      .hljs-selector-tag,
-      .hljs-subst {
-        color: #333;
-        font-weight: bold;
-      }
-      
-      .hljs-number,
-      .hljs-literal,
-      .hljs-variable,
-      .hljs-template-variable,
-      .hljs-tag .hljs-attr {
-        color: #008080;
-      }
-      
-      .hljs-string,
-      .hljs-doctag {
-        color: #d14;
-      }
-      
-      .hljs-title,
-      .hljs-section,
-      .hljs-selector-id {
-        color: #900;
-        font-weight: bold;
-      }
-      
-      .hljs-subst {
-        font-weight: normal;
-      }
-      
-      .hljs-type,
-      .hljs-class .hljs-title {
-        color: #458;
-        font-weight: bold;
-      }
-      
-      .hljs-tag,
-      .hljs-name,
-      .hljs-attribute {
-        color: #000080;
-        font-weight: normal;
-      }
-      
-      .hljs-regexp,
-      .hljs-link {
-        color: #009926;
-      }
-      
-      .hljs-symbol,
-      .hljs-bullet {
-        color: #990073;
-      }
-      
-      .hljs-built_in,
-      .hljs-builtin-name {
-        color: #0086b3;
-      }
-      
-      .hljs-meta {
-        color: #999;
-        font-weight: bold;
-      }
-      
-      .hljs-deletion {
-        background: #fdd;
-      }
-      
-      .hljs-addition {
-        background: #dfd;
-      }
-      
-      .hljs-emphasis {
-        font-style: italic;
-      }
-      
-      .hljs-strong {
-        font-weight: bold;
-      }
-	`;
+  $('head').append(localStyle);
 
-    $('head').append(
-      `<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-      <meta content="utf-8" http-equiv="encoding"></meta>`
-    );
+  let githubcss = path.join(__dirname, '..', 'node_modules', 'highlight.js', 'styles', 'github.css');
 
-    $('head').append(localStyle);
-
-    $('head').append(
-        `<link rel="stylesheet" href="file:///${css}" />`
-    );
+  $('head').append( 
+    `<style>
+      ${fs.readFileSync(githubcss)}
+    </style>`
+  );
 
 
-    let body = $('body').html();
+  $('head').append(
+      `<link rel="stylesheet" href="file:///${css}" />`
+  );
 
-    $('body').remove();
-    $.root().append(`<article class="markdown-body"></article>`);
-    $('.markdown-body').append(body);
 
-    
+  let body = $('body').html();
 
-    fs.writeFileSync(target, $.html())
+  $('body').remove();
+  $.root().append(`<article class="markdown-body"></article>`);
+  $('.markdown-body').append(body);
+
+  fs.writeFileSync(target, $.html())
 
 }
