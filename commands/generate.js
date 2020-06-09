@@ -36,17 +36,17 @@ exports.handler = async argv => {
 
 async function generate(source, target, css)
 {
-  console.log(chalk.keyword('pink')(`Transforming ${source}`));
+  console.log(chalk.keyword('blue')(`Transforming ${source} => ${target}`));
   // child.execSync(`pandoc --from=markdown_mmd+yaml_metadata_block+smart --standalone --to=html -V css=${css} --output=Shells.html ${source}`)
 
   let Parse = require('../lib/markdown');
   let parser = new Parse();
 
+  console.log(chalk.keyword('green')(`Parsing markdown`));
   let html = await parser.parse( source )
+  console.log( chalk.gray(`${html.substring(0,500)}\n...`) );
 
-  // console.log( html );
-
-  console.log(chalk.keyword('pink')(`Adding css`));
+  console.log(chalk.keyword('green')(`Tweaking and rendering final html`));
   let $ = cheerio.load('<!doctype html>' + html);
 
   $('head').append(
@@ -99,6 +99,11 @@ async function generate(source, target, css)
   $.root().append(`<article class="markdown-body"></article>`);
   $('.markdown-body').append(body);
 
-  fs.writeFileSync(target, $.html())
+  console.log(chalk.keyword('pink')(`Final result in ${target}`));
+ 
+  let results = $.html();
+  console.log( chalk.gray(`${results.substring(0,500)}\n...`) );
+
+  fs.writeFileSync(target, results);
 
 }
