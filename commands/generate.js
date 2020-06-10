@@ -127,7 +127,7 @@ By {{author}}
 
                 let html = await parser.parse(source);
                 let $$ = cheerio.load(html);
-                let title = $$('h2')[0].value;
+                let title = $$('h2').first().text();
                 ch.content.push( {title: title});
             }
         }
