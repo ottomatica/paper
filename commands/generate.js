@@ -69,22 +69,28 @@ async function book(file, target_dir, css)
 {
     const indexYml = yaml.safeLoad(fs.readFileSync(file), 'utf8');
 
-    await index(file, indexYml, path.join(target_dir, 'index.html'));
+    let book = new Book(file);
+    let view = book.indexBookView(indexYml);
+
+    console.log(JSON.stringify(view, null, 3));
+    await index(view, path.join(target_dir, 'index.html'));
 
     // process chapter content
-    for( var chap of indexYml.chapters )
+    for( var chapter of view.chapters )
     {
-        for( var content of chap.content )
-        {
-            console.log( chap, content );
-            if( typeof(content) == "string" )
-            {
-                let source = path.join( path.dirname(file), content );
-                let target = path.join( target_dir, path.basename(source) + '.html');
+        // TODO: generate index of chapter...
 
-                console.log( source, target);
-                await generate(source, target, css )
+        for( var content of chapter.content )
+        {
+            let source = content.source;
+            let target = path.join( target_dir, content.link);
+
+            if( !fs.existsSync( path.dirname(target) ))
+            {
+                fs.mkdirSync( path.dirname(target));
             }
+
+            await generate(source, target, css )
         }
     }
 
@@ -93,22 +99,17 @@ async function book(file, target_dir, css)
 
 
 
-async function index(file,indexYml, target)
+async function index(view, target)
 {
-    let parser = new Parse();
-    let book = new Book(file);
-
-    var view = book.indexBookView(indexYml);
-
     var template = 
     `
 # {{title}}
 By {{author}}
 
 {{#chapters}}
-* **{{name}}**:  _{{about}}_.  
+* **[{{name}}]({{link}})**:  _{{about}}_.  
 {{#content}}
-  - {{title}}
+  - [{{title}}]({{link}})
 {{/content}}      
 {{/chapters}}    
 `;
