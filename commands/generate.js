@@ -4,10 +4,11 @@ const path  = require('path');
 const chalk = require('chalk');
 const yaml = require('js-yaml');
 const cheerio = require('cheerio');
-let marked = require('marked');
-let Parse = require('../lib/markdown');
+const marked  = require('marked');
 let Mustache = require('mustache');
 
+let Parse = require('../lib/markdown');
+let Book  = require('../lib/book');
 
 exports.command = 'generate <source> [target]';
 exports.desc = 'Create artifact from markdown';
@@ -90,15 +91,14 @@ async function book(file, target_dir, css)
 }
 
 
+
+
 async function index(file,indexYml, target)
 {
     let parser = new Parse();
+    let book = new Book(file);
 
-    var view = {
-        title: indexYml.title,
-        author: indexYml.author,
-        chapters: []
-    };
+    var view = book.indexBookView(indexYml);
 
     var template = 
     `
@@ -112,26 +112,6 @@ By {{author}}
 {{/content}}      
 {{/chapters}}    
 `;
-
-    for( var chap of indexYml.chapters  )
-    {
-        let ch = {name: chap.name, about: chap.about, content: []}
-        view.chapters.push( ch );
-
-        for( var content of chap.content )
-        {
-            console.log( chap, content );
-            if( typeof(content) == "string" )
-            {
-                let source = path.join( path.dirname(file), content );
-
-                let html = await parser.parse(source);
-                let $$ = cheerio.load(html);
-                let title = $$('h2').first().text();
-                ch.content.push( {title: title});
-            }
-        }
-    }
 
     var output = Mustache.render(template, view);
     console.log(output);
