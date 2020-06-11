@@ -1,4 +1,4 @@
-const fs    = require('fs');
+const fs = require('fs-extra')
 const path  = require('path');
 
 const chalk = require('chalk');
@@ -82,10 +82,19 @@ async function book(file, target_dir, css)
     // process chapter content
     for( var chapter of view.chapters )
     {
+        // Prepare chapter destination
         if( !fs.existsSync( path.join(target_dir, chapter.stub)) )
         {
             fs.mkdirSync( path.join(target_dir, chapter.stub));
         }
+        // Copy any images
+        let img_dir = path.join( path.dirname(file), chapter.stub, 'imgs');
+        if( fs.existsSync( img_dir) )
+        {
+            fs.copy( img_dir, path.join(target_dir, chapter.stub, 'imgs'));
+        }
+
+        // Create index for chapter content
         await generateView(chapter, path.join(target_dir, chapter.stub, 'index.html'), chapterIndexTemplate, css );
 
         for( var content of chapter.content )
@@ -209,9 +218,9 @@ async function renderHtml(html, css, options)
     }
 
 
-    if( options.imgRoot)
+    if( options.imgRoot && options.imgRoot != './')
     {
-        // Rewrite imgs to be relative to imgRoot.
+        // Rewrite remote imgs to be use remote imgRoot.
         $('img').each( function() {
             var link = $(this).attr('src');
             if (!link.startsWith('http') && !link.startsWith('//'))
