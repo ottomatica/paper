@@ -75,6 +75,7 @@ async function book(file, target_dir, css)
     console.log(JSON.stringify(view, null, 3));
     var bookIndexTemplate = fs.readFileSync( path.join( __dirname, '..', 'lib', 'templates', 'bookIndex.mustache')).toString();
     var chapterIndexTemplate = fs.readFileSync( path.join( __dirname, '..', 'lib', 'templates', 'chapterIndex.mustache')).toString();
+    var sidebarTemplate = fs.readFileSync( path.join( __dirname, '..', 'lib', 'templates', 'sidebar.mustache')).toString();
 
     await generateView(view, path.join(target_dir, 'index.html'), bookIndexTemplate, css);
 
@@ -92,7 +93,12 @@ async function book(file, target_dir, css)
             let source = content.source;
             let target = path.join( target_dir, content.link);
 
-            options = { imgRoot: content.imgRoot };
+            options = { imgRoot: content.imgRoot,
+                        sidebar: {
+                            view: chapter,
+                            template: sidebarTemplate
+                        } 
+            };
 
             // if( !fs.existsSync( path.dirname(target) ))
             // {
@@ -114,12 +120,12 @@ async function generateView(view, target, template, css)
     console.log(output);
     let html = await marked( output );
     console.log(html);
-    let results = renderHtml(html, css, {});
+    let results = await renderHtml(html, css, {});
 
     fs.writeFileSync(target, results);
 }
 
-function renderHtml(html, css, options)
+async function renderHtml(html, css, options)
 {
     let $ = cheerio.load('<!doctype html>' + html);
 
@@ -142,12 +148,33 @@ function renderHtml(html, css, options)
           .markdown-body {
               padding: 15px;
           }
+          .sidebar {padding-top: 15px;}
       }
   
       .markdown-body .warning {
           border-style: solid;
           background-color: rgba(255,10,0,.05);
       }
+
+      .main {
+        margin-left: 200px; /* Same as the width of the sidenav */
+        padding: 0px 10px;
+      }
+
+      /* The sidebar menu */
+      .sidebar {
+        height: 100%; /* Full-height: remove this if you want "auto" height */
+        width: 200px; /* Set the width of the sidebar */
+        position: fixed; /* Fixed Sidebar (stay in place on scroll) */
+        z-index: 1; /* Stay on top */
+        top: 0; /* Stay at the top */
+        left: 0;
+        background-color: #eee; 
+        overflow-x: hidden; /* Disable horizontal scroll */
+        padding-top: 20px;
+        padding-left: 10px;
+      }
+
       </style>
     `;
   
@@ -159,7 +186,8 @@ function renderHtml(html, css, options)
           `<link rel="stylesheet" href="/Book/${link}" />`
       );
     }
-  
+
+
     if( options.imgRoot)
     {
         // Rewrite imgs to be relative to imgRoot.
@@ -175,9 +203,23 @@ function renderHtml(html, css, options)
 
   
     let body = $('body').html();
-  
     $('body').remove();
-    $.root().append(`<article class="markdown-body"></article>`);
+
+    if( options.sidebar )
+    {
+        // console.log(JSON.stringify( options.sidebar ));
+        var output = Mustache.render(options.sidebar.template, options.sidebar.view);
+        console.log(output);
+        let sidebar = await marked( output );
+    
+        $.root().append(
+            `<div class="sidebar">
+            ${sidebar}
+            </div>`
+        );
+    }
+
+    $.root().append(`<div class="main"><article class="markdown-body"></article></div>`);
     $('.markdown-body').append(body);
 
     return $.html();
@@ -195,7 +237,7 @@ async function generate(source, target, css, options)
   console.log( chalk.gray(`${html.substring(0,500)}\n...`) );
 
   console.log(chalk.keyword('green')(`Tweaking and rendering final html`));
-  let results = renderHtml(html, css, options);
+  let results = await renderHtml(html, css, options);
 
   console.log(chalk.keyword('pink')(`Final result in ${target}`));
  
