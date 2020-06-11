@@ -70,7 +70,7 @@ async function book(file, target_dir, css)
     const indexYml = yaml.safeLoad(fs.readFileSync(file), 'utf8');
 
     let book = new Book(file);
-    let view = book.indexBookView(indexYml);
+    let view = await book.indexBookView(indexYml);
 
     console.log(JSON.stringify(view, null, 3));
     var bookIndexTemplate = fs.readFileSync( path.join( __dirname, '..', 'lib', 'templates', 'bookIndex.mustache')).toString();
@@ -150,10 +150,20 @@ function renderHtml(html, css)
     for( var link of css)
     {
       $('head').append(
-          `<link rel="stylesheet" href="${link}" />`
+          `<link rel="stylesheet" href="/Book/${link}" />`
       );
     }
   
+    // Rewrite imgs to be relative to cwd.
+    $('img').each( function() {
+        var link = $(this).attr('src');
+        if (!link.startsWith('http') && !link.startsWith('//'))
+        {
+            let fixedUrl = path.join('..',path.basename(cwd),link) ;
+            $(this).attr('src', fixedUrl);
+        }
+    });
+
   
     let body = $('body').html();
   
