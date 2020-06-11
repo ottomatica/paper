@@ -73,12 +73,12 @@ async function book(file, target_dir, css)
     let view = book.indexBookView(indexYml);
 
     console.log(JSON.stringify(view, null, 3));
-    await index(view, path.join(target_dir, 'index.html'));
+    await generateBookIndex(view, path.join(target_dir, 'index.html'));
 
     // process chapter content
     for( var chapter of view.chapters )
     {
-        // TODO: generate index of chapter...
+        await generateChapterIndex(chapter, path.join(target_dir, chapter.stub, 'index.html') );
 
         for( var content of chapter.content )
         {
@@ -99,7 +99,7 @@ async function book(file, target_dir, css)
 
 
 
-async function index(view, target)
+async function generateBookIndex(view, target)
 {
     var template = 
     `
@@ -107,11 +107,33 @@ async function index(view, target)
 By {{author}}
 
 {{#chapters}}
-* **[{{name}}]({{link}})**:  _{{about}}_.  
+* **[{{name}}]({{stub}}/index.html)**:  _{{about}}_.  
 {{#content}}
   - [{{title}}]({{link}})
 {{/content}}      
 {{/chapters}}    
+`;
+
+    var output = Mustache.render(template, view);
+    console.log(output);
+    let html = await marked( output );
+
+    console.log(html);
+    let $ = cheerio.load('<!doctype html>' + html);
+
+    fs.writeFileSync(target, $.html());
+
+}
+
+async function generateChapterIndex(view, target)
+{
+    var template = 
+    `
+# {{name}}
+_{{about}}_
+{{#content}}
+  - [{{title}}]({{chapterLink}})
+{{/content}}      
 `;
 
     var output = Mustache.render(template, view);
