@@ -57,7 +57,7 @@ exports.handler = async argv => {
         }
         else
         {
-            await generate(source, target, css);
+            await generate(source, target, css, {});
         }
 
     })();
@@ -81,6 +81,10 @@ async function book(file, target_dir, css)
     // process chapter content
     for( var chapter of view.chapters )
     {
+        if( !fs.existsSync( path.join(target_dir, chapter.stub)) )
+        {
+            fs.mkdirSync( path.join(target_dir, chapter.stub));
+        }
         await generateView(chapter, path.join(target_dir, chapter.stub, 'index.html'), chapterIndexTemplate, css );
 
         for( var content of chapter.content )
@@ -88,12 +92,14 @@ async function book(file, target_dir, css)
             let source = content.source;
             let target = path.join( target_dir, content.link);
 
-            if( !fs.existsSync( path.dirname(target) ))
-            {
-                fs.mkdirSync( path.dirname(target));
-            }
+            options = { imgRoot: content.imgRoot };
 
-            await generate(source, target, css )
+            // if( !fs.existsSync( path.dirname(target) ))
+            // {
+            //     fs.mkdirSync( path.dirname(target));
+            // }
+
+            await generate(source, target, css, options )
         }
     }
 
@@ -108,12 +114,12 @@ async function generateView(view, target, template, css)
     console.log(output);
     let html = await marked( output );
     console.log(html);
-    let results = renderHtml(html, css);
+    let results = renderHtml(html, css, {});
 
     fs.writeFileSync(target, results);
 }
 
-function renderHtml(html, css)
+function renderHtml(html, css, options)
 {
     let $ = cheerio.load('<!doctype html>' + html);
 
@@ -154,15 +160,18 @@ function renderHtml(html, css)
       );
     }
   
-    // Rewrite imgs to be relative to cwd.
-    $('img').each( function() {
-        var link = $(this).attr('src');
-        if (!link.startsWith('http') && !link.startsWith('//'))
-        {
-            let fixedUrl = path.join('..',path.basename(cwd),link) ;
-            $(this).attr('src', fixedUrl);
-        }
-    });
+    if( options.imgRoot)
+    {
+        // Rewrite imgs to be relative to imgRoot.
+        $('img').each( function() {
+            var link = $(this).attr('src');
+            if (!link.startsWith('http') && !link.startsWith('//'))
+            {
+                let fixedUrl = path.join(options.imgRoot,link);
+                $(this).attr('src', fixedUrl);
+            }
+        });
+    }
 
   
     let body = $('body').html();
@@ -174,7 +183,7 @@ function renderHtml(html, css)
     return $.html();
 }
 
-async function generate(source, target, css)
+async function generate(source, target, css, options)
 {
   console.log(chalk.keyword('blue')(`Transforming ${source} => ${target}`));
   // child.execSync(`pandoc --from=markdown_mmd+yaml_metadata_block+smart --standalone --to=html -V css=${css} --output=Shells.html ${source}`)
@@ -186,7 +195,7 @@ async function generate(source, target, css)
   console.log( chalk.gray(`${html.substring(0,500)}\n...`) );
 
   console.log(chalk.keyword('green')(`Tweaking and rendering final html`));
-  let results = renderHtml(html, css);
+  let results = renderHtml(html, css, options);
 
   console.log(chalk.keyword('pink')(`Final result in ${target}`));
  
