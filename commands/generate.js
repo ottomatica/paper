@@ -97,7 +97,8 @@ async function book(file, target_dir, css)
                         sidebar: {
                             view: view,
                             template: sidebarTemplate
-                        } 
+                        },
+                        root_url: view.root_url
             };
 
             // if( !fs.existsSync( path.dirname(target) ))
@@ -195,9 +196,10 @@ async function renderHtml(html, css, options)
   
     for( var link of css)
     {
-      $('head').append(
-          `<link rel="stylesheet" href="/Book/${link}" />`
-      );
+        let url = `${options.root_url}${link}`;
+        $('head').append(
+            `<link rel="stylesheet" href="${url}" />`
+        );
     }
 
 
