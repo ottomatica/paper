@@ -73,12 +73,15 @@ async function book(file, target_dir, css)
     let view = book.indexBookView(indexYml);
 
     console.log(JSON.stringify(view, null, 3));
-    await generateBookIndex(view, path.join(target_dir, 'index.html'));
+    var bookIndexTemplate = fs.readFileSync( path.join( __dirname, '..', 'lib', 'templates', 'bookIndex.mustache')).toString();
+    var chapterIndexTemplate = fs.readFileSync( path.join( __dirname, '..', 'lib', 'templates', 'chapterIndex.mustache')).toString();
+
+    await generateView(view, path.join(target_dir, 'index.html'), bookIndexTemplate);
 
     // process chapter content
     for( var chapter of view.chapters )
     {
-        await generateChapterIndex(chapter, path.join(target_dir, chapter.stub, 'index.html') );
+        await generateView(chapter, path.join(target_dir, chapter.stub, 'index.html'), chapterIndexTemplate );
 
         for( var content of chapter.content )
         {
@@ -99,21 +102,8 @@ async function book(file, target_dir, css)
 
 
 
-async function generateBookIndex(view, target)
+async function generateView(view, target, template)
 {
-    var template = 
-    `
-# {{title}}
-By {{author}}
-
-{{#chapters}}
-* **[{{name}}]({{stub}}/index.html)**:  _{{about}}_.  
-{{#content}}
-  - [{{title}}]({{link}})
-{{/content}}      
-{{/chapters}}    
-`;
-
     var output = Mustache.render(template, view);
     console.log(output);
     let html = await marked( output );
@@ -122,20 +112,10 @@ By {{author}}
     let $ = cheerio.load('<!doctype html>' + html);
 
     fs.writeFileSync(target, $.html());
-
 }
 
 async function generateChapterIndex(view, target)
 {
-    var template = 
-    `
-# {{name}}
-_{{about}}_
-{{#content}}
-  - [{{title}}]({{chapterLink}})
-{{/content}}      
-`;
-
     var output = Mustache.render(template, view);
     console.log(output);
     let html = await marked( output );
@@ -144,7 +124,6 @@ _{{about}}_
     let $ = cheerio.load('<!doctype html>' + html);
 
     fs.writeFileSync(target, $.html());
-
 }
 
 async function generate(source, target, css)
