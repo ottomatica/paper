@@ -121,7 +121,7 @@ async function generateView(view, target, template, css)
     console.log(output);
     let html = await marked( output );
     console.log(html);
-    let results = await renderHtml(html, css, {});
+    let results = await renderHtml(html, css, {root_url: view.root_url});
 
     fs.writeFileSync(target, results);
 }
@@ -155,6 +155,12 @@ async function renderHtml(html, css, options)
       .markdown-body .warning {
           border-style: solid;
           background-color: rgba(255,10,0,.05);
+      }
+
+      .markdown-body pre
+      {
+        border-radius: 0.3rem;
+        border: solid 1px #dce6f0;
       }
 
       .main {
