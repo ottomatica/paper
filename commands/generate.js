@@ -76,12 +76,12 @@ async function book(file, target_dir, css)
     var bookIndexTemplate = fs.readFileSync( path.join( __dirname, '..', 'lib', 'templates', 'bookIndex.mustache')).toString();
     var chapterIndexTemplate = fs.readFileSync( path.join( __dirname, '..', 'lib', 'templates', 'chapterIndex.mustache')).toString();
 
-    await generateView(view, path.join(target_dir, 'index.html'), bookIndexTemplate);
+    await generateView(view, path.join(target_dir, 'index.html'), bookIndexTemplate, css);
 
     // process chapter content
     for( var chapter of view.chapters )
     {
-        await generateView(chapter, path.join(target_dir, chapter.stub, 'index.html'), chapterIndexTemplate );
+        await generateView(chapter, path.join(target_dir, chapter.stub, 'index.html'), chapterIndexTemplate, css );
 
         for( var content of chapter.content )
         {
@@ -102,28 +102,66 @@ async function book(file, target_dir, css)
 
 
 
-async function generateView(view, target, template)
+async function generateView(view, target, template, css)
 {
     var output = Mustache.render(template, view);
     console.log(output);
     let html = await marked( output );
-
     console.log(html);
-    let $ = cheerio.load('<!doctype html>' + html);
+    let results = renderHtml(html, css);
 
-    fs.writeFileSync(target, $.html());
+    fs.writeFileSync(target, results);
 }
 
-async function generateChapterIndex(view, target)
+function renderHtml(html, css)
 {
-    var output = Mustache.render(template, view);
-    console.log(output);
-    let html = await marked( output );
-
-    console.log(html);
     let $ = cheerio.load('<!doctype html>' + html);
 
-    fs.writeFileSync(target, $.html());
+    $('head').append(
+        `<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+         <meta content="utf-8" http-equiv="encoding"></meta>`
+    );
+  
+    let localStyle = `<style>
+      .markdown-body {
+          box-sizing: border-box;
+          min-width: 200px;
+          max-width: 980px;
+          margin: 0 auto;
+          padding: 45px;
+          border-style: dotted solid;
+      }
+  
+        @media (max-width: 767px) {
+          .markdown-body {
+              padding: 15px;
+          }
+      }
+  
+      .markdown-body .warning {
+          border-style: solid;
+          background-color: rgba(255,10,0,.05);
+      }
+      </style>
+    `;
+  
+    $('head').append(localStyle);
+  
+    for( var link of css)
+    {
+      $('head').append(
+          `<link rel="stylesheet" href="${link}" />`
+      );
+    }
+  
+  
+    let body = $('body').html();
+  
+    $('body').remove();
+    $.root().append(`<article class="markdown-body"></article>`);
+    $('.markdown-body').append(body);
+
+    return $.html();
 }
 
 async function generate(source, target, css)
@@ -138,55 +176,10 @@ async function generate(source, target, css)
   console.log( chalk.gray(`${html.substring(0,500)}\n...`) );
 
   console.log(chalk.keyword('green')(`Tweaking and rendering final html`));
-  let $ = cheerio.load('<!doctype html>' + html);
-
-  $('head').append(
-      `<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-       <meta content="utf-8" http-equiv="encoding"></meta>`
-  );
-
-  let localStyle = `<style>
-    .markdown-body {
-		box-sizing: border-box;
-		min-width: 200px;
-		max-width: 980px;
-		margin: 0 auto;
-        padding: 45px;
-        border-style: dotted solid;
-    }
-
-	  @media (max-width: 767px) {
-		.markdown-body {
-			padding: 15px;
-        }
-    }
-
-    .markdown-body .warning {
-        border-style: solid;
-        background-color: rgba(255,10,0,.05);
-    }
-    </style>
-  `;
-
-  $('head').append(localStyle);
-
-  for( var link of css)
-  {
-    $('head').append(
-        `<link rel="stylesheet" href="${link}" />`
-    );
-  }
-
-
-  let body = $('body').html();
-
-  $('body').remove();
-  $.root().append(`<article class="markdown-body"></article>`);
-  $('.markdown-body').append(body);
+  let results = renderHtml(html, css);
 
   console.log(chalk.keyword('pink')(`Final result in ${target}`));
  
-  let results = $.html();
   console.log( chalk.gray(`${results.substring(0,500)}\n...`) );
 
   fs.writeFileSync(target, results);
