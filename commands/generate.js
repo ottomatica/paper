@@ -95,7 +95,7 @@ async function book(file, target_dir, css)
 
             options = { imgRoot: content.imgRoot,
                         sidebar: {
-                            view: chapter,
+                            view: view,
                             template: sidebarTemplate
                         } 
             };
@@ -169,10 +169,23 @@ async function renderHtml(html, css, options)
         z-index: 1; /* Stay on top */
         top: 0; /* Stay at the top */
         left: 0;
-        background-color: #eee; 
+        background-color: #F2E9E4; 
         overflow-x: hidden; /* Disable horizontal scroll */
         padding-top: 20px;
         padding-left: 10px;
+        color: #261C16;
+        border: 1px solid #D9D0C7;
+      }
+
+      /* The navigation menu links */
+      .sidebar a {
+        color: #261C16;
+        display: block;
+      }
+
+      /* When you mouse over the navigation links, change their color */
+      .sidebar a:hover {
+        color: #8C8480;
       }
 
       </style>
