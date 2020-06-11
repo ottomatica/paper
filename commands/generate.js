@@ -167,7 +167,7 @@ function renderHtml(html, css, options)
             var link = $(this).attr('src');
             if (!link.startsWith('http') && !link.startsWith('//'))
             {
-                let fixedUrl = path.join(options.imgRoot,link);
+                let fixedUrl = options.imgRoot + link;
                 $(this).attr('src', fixedUrl);
             }
         });
