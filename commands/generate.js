@@ -166,10 +166,10 @@ async function renderHtml(html, css, options)
           background-color: rgba(255,10,0,.05);
       }
 
-      .markdown-body .warning {
-        border-style: solid;
-        border-left-color: #f16529;
+      .markdown-body .aside {
+        border-left: 10px solid #f16529;        
       }
+      /* #358ccb; */
 
       .markdown-body pre
       {
