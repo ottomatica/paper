@@ -209,6 +209,15 @@ async function renderHtml(html, css, options)
         color: #8C8480;
       }
 
+      .markdown-body .footnote-ref {
+          padding-left:1px;
+      }
+
+      .markdown-body .footnote-ref a {
+        color: #261C16;
+        text-decoration: none;
+      }
+
       </style>
     `;
   
